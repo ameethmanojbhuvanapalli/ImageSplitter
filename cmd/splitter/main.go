@@ -6,20 +6,71 @@ import (
 	"path/filepath"
 	"time"
 
+	"imagesplitter/internal/cli"
 	"imagesplitter/internal/config"
 	"imagesplitter/internal/filesystem"
 	"imagesplitter/internal/gui"
+	"imagesplitter/internal/runner"
 )
 
 func main() {
+	os.Exit(run(os.Args[1:]))
+}
+
+func run(args []string) int {
 	appDir, err := filesystem.AppDir()
 	if err != nil {
 		writeCrashFile(".", err)
-		os.Exit(1)
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+
+	opts, err := cli.ParseArgs(args)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+
+	if opts.Run {
+		return runHeadless(appDir, opts.OpenReport)
 	}
 
 	cfg := config.Load(appDir)
 	gui.Run(appDir, cfg)
+	return 0
+}
+
+func runHeadless(appDir string, openReport bool) int {
+	cfg, err := config.LoadRequired(appDir)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	if err := runner.ValidateConfig(cfg); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+
+	result, latestReport, _, err := runner.Execute(appDir, cfg)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+
+	exitCode := 0
+	if runner.HasFolderErrors(result) {
+		exitCode = 2
+	}
+
+	if openReport {
+		if _, err := os.Stat(latestReport); err == nil {
+			if err := runner.OpenFile(latestReport); err != nil {
+				fmt.Fprintf(os.Stderr, "could not open report: %v\n", err)
+			}
+		}
+	}
+
+	return exitCode
 }
 
 func writeCrashFile(appDir string, err error) {
