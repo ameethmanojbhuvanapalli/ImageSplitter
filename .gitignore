@@ -1,0 +1,6 @@
+splitter.exe
+History/
+config.json
+go.sum
+*.log
+*.html
