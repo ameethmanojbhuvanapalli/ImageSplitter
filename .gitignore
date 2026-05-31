@@ -1,6 +1,13 @@
-splitter.exe
+# Build outputs
+*.exe
+
+# Runtime files
 History/
+Latest Report.html
+Latest Log.log
+
+# User-specific config
 config.json
-go.sum
+
+# Generated logs
 *.log
-*.html
