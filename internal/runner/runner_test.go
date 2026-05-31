@@ -46,21 +46,49 @@ func TestValidateConfig(t *testing.T) {
 }
 
 func TestHasFolderErrors(t *testing.T) {
-	result := &models.RunResult{
-		FolderResults: []*models.FolderResult{
-			{
-				ImageResults: []*models.ImageResult{
-					{Status: models.StatusProcessed},
+	t.Run("returns false for nil result", func(t *testing.T) {
+		if HasFolderErrors(nil) {
+			t.Fatalf("expected HasFolderErrors=false")
+		}
+	})
+
+	t.Run("returns true when any folder has error", func(t *testing.T) {
+		result := &models.RunResult{
+			FolderResults: []*models.FolderResult{
+				{
+					ImageResults: []*models.ImageResult{
+						{Status: models.StatusProcessed},
+					},
+				},
+				{
+					ImageResults: []*models.ImageResult{
+						{Status: models.StatusError},
+					},
 				},
 			},
-			{
-				ImageResults: []*models.ImageResult{
-					{Status: models.StatusError},
+		}
+		if !HasFolderErrors(result) {
+			t.Fatalf("expected HasFolderErrors=true")
+		}
+	})
+
+	t.Run("returns false when no folder has error", func(t *testing.T) {
+		result := &models.RunResult{
+			FolderResults: []*models.FolderResult{
+				{
+					ImageResults: []*models.ImageResult{
+						{Status: models.StatusProcessed},
+					},
+				},
+				{
+					ImageResults: []*models.ImageResult{
+						{Status: models.StatusAlreadyProcessed},
+					},
 				},
 			},
-		},
-	}
-	if !HasFolderErrors(result) {
-		t.Fatalf("expected HasFolderErrors=true")
-	}
+		}
+		if HasFolderErrors(result) {
+			t.Fatalf("expected HasFolderErrors=false")
+		}
+	})
 }

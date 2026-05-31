@@ -13,7 +13,7 @@ const Version = "1.1.0"
 type Config struct {
 	RootFolder        string   `json:"rootFolder"`
 	ScanDepth         int      `json:"scanDepth"`
-	TargetBaseNames   []string `json:"targetBaseNames"` // e.g. ["front","back"] — no extension
+	TargetBaseNames   []string `json:"targetBaseNames"` // e.g. ["front","back"] -- no extension
 	LeftSuffix        string   `json:"leftSuffix"`
 	RightSuffix       string   `json:"rightSuffix"`
 	DeleteOriginal    bool     `json:"deleteOriginal"`

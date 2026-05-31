@@ -88,11 +88,14 @@ func Execute(appDir string, cfg *config.Config) (
 
 func ValidateConfig(cfg *config.Config) error {
 	if cfg.RootFolder == "" {
-		return fmt.Errorf("Please select a folder to process.")
+		return fmt.Errorf("root folder is required")
 	}
 	info, err := os.Stat(cfg.RootFolder)
 	if err != nil {
-		return fmt.Errorf("The selected folder does not exist:\n%s", cfg.RootFolder)
+		if os.IsNotExist(err) {
+			return fmt.Errorf("The selected folder does not exist:\n%s", cfg.RootFolder)
+		}
+		return fmt.Errorf("Cannot access the selected folder:\n%s\n\n%v", cfg.RootFolder, err)
 	}
 	if !info.IsDir() {
 		return fmt.Errorf("The selected path is not a folder:\n%s", cfg.RootFolder)
@@ -105,18 +108,23 @@ func ValidateConfig(cfg *config.Config) error {
 		}
 	}
 	if nonEmptyNames == 0 {
-		return fmt.Errorf("Please enter at least one image filename to split.")
+		return fmt.Errorf("at least one target image filename is required")
 	}
-	if strings.TrimSpace(cfg.LeftSuffix) == "" || strings.TrimSpace(cfg.RightSuffix) == "" {
-		return fmt.Errorf("Left and right suffixes must not be empty.")
+	leftSuffix := strings.TrimSpace(cfg.LeftSuffix)
+	rightSuffix := strings.TrimSpace(cfg.RightSuffix)
+	if leftSuffix == "" || rightSuffix == "" {
+		return fmt.Errorf("left and right suffixes must not be empty")
 	}
-	if strings.TrimSpace(cfg.LeftSuffix) == strings.TrimSpace(cfg.RightSuffix) {
-		return fmt.Errorf("Left and right suffixes must be different from each other.")
+	if leftSuffix == rightSuffix {
+		return fmt.Errorf("left and right suffixes must be different from each other")
 	}
 	return nil
 }
 
 func HasFolderErrors(result *models.RunResult) bool {
+	if result == nil {
+		return false
+	}
 	for _, folder := range result.FolderResults {
 		if folder.OverallStatus() == models.StatusError {
 			return true
@@ -138,7 +146,7 @@ func OpenFile(path string) error {
 	return cmd.Start()
 }
 
-func copyFile(src, dst string) error {
+func copyFile(src, dst string) (err error) {
 	in, err := os.Open(src)
 	if err != nil {
 		return err
@@ -148,7 +156,11 @@ func copyFile(src, dst string) error {
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer func() {
+		if cerr := out.Close(); err == nil && cerr != nil {
+			err = cerr
+		}
+	}()
 	_, err = io.Copy(out, in)
 	return err
 }
