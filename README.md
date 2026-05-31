@@ -30,6 +30,36 @@ That's it. No config files to edit, no terminal, no setup.
 
 Settings are remembered automatically between runs.
 
+## Example Configuration
+
+The repository includes a `config.example.json` file:
+
+```json
+{
+  "rootFolder": "C:/Path/To/Your/Images",
+  "scanDepth": -1,
+  "targetBaseNames": ["front", "back", "cover"],
+  "leftSuffix": "_left",
+  "rightSuffix": "_right",
+  "deleteOriginal": false,
+  "overwriteExisting": false,
+  "debugMode": false
+}
+```
+
+### Configuration Reference
+
+| Setting | Description |
+|----------|-------------|
+| `rootFolder` | Root directory containing folders to process |
+| `scanDepth` | Folder traversal depth. `-1` = unlimited recursion, `0` = root folder only, `1` = immediate child folders, `2+` = additional levels |
+| `targetBaseNames` | Image base names to process. Example: `front` matches `front.jpg`, `front.png`, etc. |
+| `leftSuffix` | Suffix appended to the left output image |
+| `rightSuffix` | Suffix appended to the right output image |
+| `deleteOriginal` | Delete the source image after successful processing |
+| `overwriteExisting` | Overwrite output files if they already exist |
+| `debugMode` | Enable additional logging for troubleshooting |
+
 ---
 
 ## What Gets Created (Auto-generated)

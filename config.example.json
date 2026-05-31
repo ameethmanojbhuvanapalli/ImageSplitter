@@ -1,0 +1,10 @@
+{
+  "rootFolder": "C:/Path/To/Your/Images",
+  "scanDepth": -1,
+  "targetBaseNames": ["front", "back", "cover"],
+  "leftSuffix": "_left",
+  "rightSuffix": "_right",
+  "deleteOriginal": false,
+  "overwriteExisting": false,
+  "debugMode": false
+}
