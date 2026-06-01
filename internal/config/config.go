@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -12,7 +13,7 @@ const Version = "1.1.0"
 type Config struct {
 	RootFolder        string   `json:"rootFolder"`
 	ScanDepth         int      `json:"scanDepth"`
-	TargetBaseNames   []string `json:"targetBaseNames"`   // e.g. ["front","back"] — no extension
+	TargetBaseNames   []string `json:"targetBaseNames"` // e.g. ["front","back"] -- no extension
 	LeftSuffix        string   `json:"leftSuffix"`
 	RightSuffix       string   `json:"rightSuffix"`
 	DeleteOriginal    bool     `json:"deleteOriginal"`
@@ -53,6 +54,21 @@ func Load(appDir string) *Config {
 		cfg.TargetBaseNames = []string{"front"}
 	}
 	return cfg
+}
+
+// LoadRequired reads config.json from appDir and returns an error if the file is
+// missing or invalid.
+func LoadRequired(appDir string) (*Config, error) {
+	path := filepath.Join(appDir, "config.json")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read config.json: %w", err)
+	}
+	cfg := Defaults()
+	if err := json.Unmarshal(data, cfg); err != nil {
+		return nil, fmt.Errorf("invalid config.json: %w", err)
+	}
+	return cfg, nil
 }
 
 // Save writes the current config to config.json in appDir.

@@ -8,12 +8,43 @@ installation required.
 
 ## For End Users
 
-1. Double-click `splitter.exe` (or `splitter` on Mac/Linux)
-2. Fill in the settings form
-3. Click **Run**
-4. The report opens automatically in your browser
+### GUI mode (default)
+
+```bash
+splitter.exe
+```
+
+1. Fill in the settings form
+2. Click **Run**
+3. The report opens automatically in your browser
+
+### Headless / unattended mode
+
+```bash
+splitter.exe --run
+# or
+splitter.exe /run
+```
+
+- No GUI is shown.
+- `config.json` is loaded and processing starts immediately.
+- The same logs/reports/history artifacts are generated as GUI runs.
+
+Optional:
+
+```bash
+splitter.exe --run --open-report
+```
+
+This opens `Latest Report.html` after a headless run.
 
 That's it. No config files to edit, no terminal, no setup.
+
+### Exit codes (headless mode)
+
+- `0` = Run completed successfully
+- `1` = Fatal startup/configuration error
+- `2` = Processing completed, but one or more folders ended with `Error` status
 
 ---
 
@@ -115,6 +146,20 @@ management needed.
 
 ---
 
+## Windows Task Scheduler (headless)
+
+Use **Action → Start a program**:
+
+- **Program/script**: `C:\Path\To\splitter.exe`
+- **Add arguments**: `--run`
+- **Start in**: `C:\Path\To`
+
+To open the report automatically after each scheduled run, use:
+
+- **Add arguments**: `--run --open-report`
+
+---
+
 ## Status Values in the Report
 
 | Status | Meaning |
@@ -131,8 +176,12 @@ management needed.
 ```
 cmd/
   splitter/
-    main.go               ← entry point (boots GUI)
+    main.go               ← entry point (dispatches GUI/headless modes)
 internal/
+  cli/
+    options.go            ← CLI flag parsing (`--run`, `/run`, `--open-report`)
+  runner/
+    runner.go             ← shared processing pipeline + validation + open-file helper
   config/
     config.go             ← load/save config.json, defaults, version
   models/
@@ -147,7 +196,7 @@ internal/
     report.go             ← HTML report + metadata.json
     template.go           ← self-contained HTML template
   gui/
-    gui.go                ← Fyne settings window, dialogs, run flow
+    gui.go                ← Fyne settings window, dialogs, invokes shared runner
 ```
 
 ### Key design decisions
