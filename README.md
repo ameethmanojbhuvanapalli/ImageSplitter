@@ -1,6 +1,7 @@
 # Image Splitter
 
 A cross-platform desktop app that vertically splits images across a folder
+A cross-platform desktop app that vertically splits and pads images across a folder
 hierarchy. Built with Go + Fyne. Distributed as a single executable — no
 installation required.
 
@@ -58,6 +59,11 @@ That's it. No config files to edit, no terminal, no setup.
 | **Left / Right output suffix** | What gets added to the filename for each half — preview updates live |
 | **Delete original after splitting** | Removes the source image once both halves are saved |
 | **Re-process already split images** | Runs again on folders that were already processed |
+| **Splitting: Target names** | The exact filenames to split in each subfolder (e.g. `front`) |
+| **Splitting: Suffixes** | What gets added to the filename for each half (e.g. `_left`, `_right`) |
+| **Padding: Target names** | Filenames to receive white space on the left or right side |
+| **Padding: Output mode** | Save results as new files or overwrite the originals |
+| **Padding: Color** | Hex code for the added canvas area (default `#FFFFFF`) |
 
 Settings are remembered automatically between runs.
 
@@ -75,6 +81,25 @@ The repository includes a `config.example.json` file:
   "deleteOriginal": false,
   "overwriteExisting": false,
   "debugMode": false
+  "debugMode": false,
+  "splitting": {
+    "enabled": true,
+    "targetBaseNames": ["front", "back"],
+    "leftSuffix": "_left",
+    "rightSuffix": "_right",
+    "deleteOriginal": false,
+    "overwriteExisting": false
+  },
+  "padding": {
+    "enabled": false,
+    "leftPadNames": ["00001"],
+    "rightPadNames": [],
+    "createNewFile": false,
+    "leftSuffix": "_padded",
+    "rightSuffix": "_padded",
+    "overwriteExisting": false,
+    "padColor": "#FFFFFF"
+  }
 }
 ```
 
