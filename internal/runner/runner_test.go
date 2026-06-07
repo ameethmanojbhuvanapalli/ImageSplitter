@@ -10,10 +10,12 @@ import (
 func TestValidateConfig(t *testing.T) {
 	t.Run("valid config", func(t *testing.T) {
 		cfg := &config.Config{
-			RootFolder:      t.TempDir(),
-			TargetBaseNames: []string{"front"},
-			LeftSuffix:      "_left",
-			RightSuffix:     "_right",
+			RootFolder: t.TempDir(),
+			Splitting: config.SplittingConfig{
+				TargetBaseNames: []string{"front"},
+				LeftSuffix:      "_left",
+				RightSuffix:     "_right",
+			},
 		}
 		if err := ValidateConfig(cfg); err != nil {
 			t.Fatalf("ValidateConfig() error = %v", err)
@@ -22,10 +24,12 @@ func TestValidateConfig(t *testing.T) {
 
 	t.Run("missing folder", func(t *testing.T) {
 		cfg := &config.Config{
-			RootFolder:      "",
-			TargetBaseNames: []string{"front"},
-			LeftSuffix:      "_left",
-			RightSuffix:     "_right",
+			RootFolder: "",
+			Splitting: config.SplittingConfig{
+				TargetBaseNames: []string{"front"},
+				LeftSuffix:      "_left",
+				RightSuffix:     "_right",
+			},
 		}
 		if err := ValidateConfig(cfg); err == nil {
 			t.Fatalf("expected validation error")
@@ -34,10 +38,12 @@ func TestValidateConfig(t *testing.T) {
 
 	t.Run("empty target names", func(t *testing.T) {
 		cfg := &config.Config{
-			RootFolder:      t.TempDir(),
-			TargetBaseNames: []string{"   "},
-			LeftSuffix:      "_left",
-			RightSuffix:     "_right",
+			RootFolder: t.TempDir(),
+			Splitting: config.SplittingConfig{
+				TargetBaseNames: []string{"   "},
+				LeftSuffix:      "_left",
+				RightSuffix:     "_right",
+			},
 		}
 		if err := ValidateConfig(cfg); err == nil {
 			t.Fatalf("expected validation error")

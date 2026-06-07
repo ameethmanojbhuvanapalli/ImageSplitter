@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-// Status is the outcome of processing a single image file within a folder.
+// Status is the outcome of processing a single image file.
 type Status string
 
 const (
@@ -12,15 +12,23 @@ const (
 	StatusError              Status = "Error"
 )
 
-// ImageResult records the outcome for one image file inside a folder.
+// Operation identifies which process produced this result.
+type Operation string
+
+const (
+	OperationSplitting Operation = "Splitting"
+	OperationPadding   Operation = "Padding"
+)
+
+// ImageResult records the outcome for one image file.
 type ImageResult struct {
-	FileName string
-	Status   Status
-	Message  string
+	FileName  string
+	Operation Operation
+	Status    Status
+	Message   string
 }
 
-// FolderResult records the outcome for a single folder.
-// A folder may produce multiple ImageResults (one per target base name × format found).
+// FolderResult records the outcome for a single folder across all operations.
 type FolderResult struct {
 	FolderName   string
 	FolderPath   string
@@ -29,7 +37,7 @@ type FolderResult struct {
 	EndTime      time.Time
 }
 
-// OverallStatus returns the worst status across all image results in the folder.
+// OverallStatus returns the worst status across all image results.
 // Error > Missing > AlreadyProcessed > Processed.
 func (f *FolderResult) OverallStatus() Status {
 	if len(f.ImageResults) == 0 {
@@ -41,7 +49,9 @@ func (f *FolderResult) OverallStatus() Status {
 		case StatusError:
 			return StatusError
 		case StatusTargetImageMissing:
-			worst = StatusTargetImageMissing
+			if worst != StatusError {
+				worst = StatusTargetImageMissing
+			}
 		case StatusAlreadyProcessed:
 			if worst == StatusProcessed {
 				worst = StatusAlreadyProcessed
@@ -52,6 +62,7 @@ func (f *FolderResult) OverallStatus() Status {
 }
 
 // RunResult is the authoritative data structure for a complete execution.
+// All reports and logs are generated from this — never from parsing each other.
 type RunResult struct {
 	RunNumber     int
 	StartTime     time.Time
@@ -61,7 +72,7 @@ type RunResult struct {
 
 func (r *RunResult) Duration() time.Duration { return r.EndTime.Sub(r.StartTime) }
 
-// Counts returns summary counts at the image-result level.
+// Counts returns summary counts broken down by status across all image results.
 func (r *RunResult) Counts() (processed, alreadyProcessed, missingTarget, errors int) {
 	for _, fr := range r.FolderResults {
 		for _, ir := range fr.ImageResults {
@@ -74,6 +85,29 @@ func (r *RunResult) Counts() (processed, alreadyProcessed, missingTarget, errors
 				missingTarget++
 			case StatusError:
 				errors++
+			}
+		}
+	}
+	return
+}
+
+// CountsByOperation returns processed counts split by operation for the summary.
+func (r *RunResult) CountsByOperation() (splitProcessed, splitErrors, padProcessed, padErrors int) {
+	for _, fr := range r.FolderResults {
+		for _, ir := range fr.ImageResults {
+			switch ir.Operation {
+			case OperationSplitting:
+				if ir.Status == StatusProcessed {
+					splitProcessed++
+				} else if ir.Status == StatusError {
+					splitErrors++
+				}
+			case OperationPadding:
+				if ir.Status == StatusProcessed {
+					padProcessed++
+				} else if ir.Status == StatusError {
+					padErrors++
+				}
 			}
 		}
 	}

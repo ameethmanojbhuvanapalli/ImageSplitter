@@ -43,35 +43,32 @@ func (l *Logger) Debug(msg string) {
 	}
 }
 
-// AddWriter adds an additional destination (e.g. a second log file).
 func (l *Logger) AddWriter(w io.Writer) {
 	l.writers = append(l.writers, w)
 }
 
 // LogRunResult writes a complete structured run summary derived from RunResult.
 func (l *Logger) LogRunResult(result *models.RunResult) {
-	l.Info(fmt.Sprintf("Run started  RunNumber=%d", result.RunNumber))
+	l.Info(fmt.Sprintf("Run started RunNumber=%d", result.RunNumber))
 
 	for _, fr := range result.FolderResults {
 		l.Debug(fmt.Sprintf("Folder=%q entered", fr.FolderPath))
-
 		for _, ir := range fr.ImageResults {
 			switch ir.Status {
 			case models.StatusProcessed:
-				l.Info(fmt.Sprintf("Folder=%q File=%q Status=Processed Message=%q",
-					fr.FolderName, ir.FileName, ir.Message))
+				l.Info(fmt.Sprintf("[%s] Folder=%q File=%q Status=Processed Message=%q",
+					ir.Operation, fr.FolderName, ir.FileName, ir.Message))
 			case models.StatusAlreadyProcessed:
-				l.Warn(fmt.Sprintf("Folder=%q File=%q Status=AlreadyProcessed Reason=%q",
-					fr.FolderName, ir.FileName, ir.Message))
+				l.Warn(fmt.Sprintf("[%s] Folder=%q File=%q Status=AlreadyProcessed Reason=%q",
+					ir.Operation, fr.FolderName, ir.FileName, ir.Message))
 			case models.StatusTargetImageMissing:
-				l.Warn(fmt.Sprintf("Folder=%q File=%q Status=TargetImageMissing Reason=%q",
-					fr.FolderName, ir.FileName, ir.Message))
+				l.Warn(fmt.Sprintf("[%s] Folder=%q File=%q Status=TargetImageMissing Reason=%q",
+					ir.Operation, fr.FolderName, ir.FileName, ir.Message))
 			case models.StatusError:
-				l.Error(fmt.Sprintf("Folder=%q File=%q Status=Error Reason=%q",
-					fr.FolderName, ir.FileName, ir.Message))
+				l.Error(fmt.Sprintf("[%s] Folder=%q File=%q Status=Error Reason=%q",
+					ir.Operation, fr.FolderName, ir.FileName, ir.Message))
 			}
 		}
-
 		l.Debug(fmt.Sprintf("Folder=%q done Duration=%s",
 			fr.FolderName, fr.EndTime.Sub(fr.StartTime).Round(time.Millisecond)))
 	}
@@ -79,8 +76,7 @@ func (l *Logger) LogRunResult(result *models.RunResult) {
 	processed, alreadyProcessed, missing, errors := result.Counts()
 	l.Info(fmt.Sprintf(
 		"Run completed RunNumber=%d Duration=%s Processed=%d AlreadyProcessed=%d Missing=%d Errors=%d",
-		result.RunNumber,
-		result.Duration().Round(time.Millisecond),
+		result.RunNumber, result.Duration().Round(time.Millisecond),
 		processed, alreadyProcessed, missing, errors,
 	))
 }
