@@ -23,6 +23,10 @@ type templateData struct {
 	AlreadyProcessed int
 	MissingCount     int
 	ErrorCount       int
+	SplitProcessed   int
+	SplitErrors      int
+	PadProcessed     int
+	PadErrors        int
 }
 
 func funcMap() template.FuncMap {
@@ -41,38 +45,44 @@ func funcMap() template.FuncMap {
 			return fmt.Sprintf("%dm %ds", int(d.Minutes()), int(d.Seconds())%60)
 		},
 		"overallClass": func(fr *models.FolderResult) string {
-			switch fr.OverallStatus() {
-			case models.StatusProcessed:
-				return "status-processed"
-			case models.StatusAlreadyProcessed:
-				return "status-already"
-			case models.StatusTargetImageMissing:
-				return "status-missing"
-			case models.StatusError:
-				return "status-error"
-			}
-			return ""
+			return statusClass(fr.OverallStatus())
 		},
-		"statusClass": func(s models.Status) string {
-			switch s {
-			case models.StatusProcessed:
-				return "status-processed"
-			case models.StatusAlreadyProcessed:
-				return "status-already"
-			case models.StatusTargetImageMissing:
-				return "status-missing"
-			case models.StatusError:
-				return "status-error"
-			}
-			return ""
-		},
-		"statusLabel": func(s models.Status) string { return string(s) },
 		"overallLabel": func(fr *models.FolderResult) string {
 			return string(fr.OverallStatus())
 		},
-		"runPad": func(n int) string { return fmt.Sprintf("%03d", n) },
-		"add":    func(a, b int) int { return a + b },
+		"statusClass": func(s models.Status) string {
+			return statusClass(s)
+		},
+		"statusLabel": func(s models.Status) string { return string(s) },
+		"runPad":      func(n int) string { return fmt.Sprintf("%03d", n) },
+		"add":         func(a, b int) int { return a + b },
+		"opClass": func(op models.Operation) string {
+			if op == models.OperationSplitting {
+				return "op-split"
+			}
+			return "op-pad"
+		},
+		"opLabel": func(op models.Operation) string {
+			if op == models.OperationSplitting {
+				return "Split"
+			}
+			return "Pad"
+		},
 	}
+}
+
+func statusClass(s models.Status) string {
+	switch s {
+	case models.StatusProcessed:
+		return "status-processed"
+	case models.StatusAlreadyProcessed:
+		return "status-already"
+	case models.StatusTargetImageMissing:
+		return "status-missing"
+	case models.StatusError:
+		return "status-error"
+	}
+	return ""
 }
 
 func WriteMetadata(runDir string, result *models.RunResult) error {
@@ -102,11 +112,17 @@ func WriteReport(path string, result *models.RunResult) error {
 	}
 
 	processed, alreadyProcessed, missing, errors := result.Counts()
+	splitProcessed, splitErrors, padProcessed, padErrors := result.CountsByOperation()
+
 	return tmpl.Execute(f, templateData{
 		RunResult:        result,
 		ProcessedCount:   processed,
 		AlreadyProcessed: alreadyProcessed,
 		MissingCount:     missing,
 		ErrorCount:       errors,
+		SplitProcessed:   splitProcessed,
+		SplitErrors:      splitErrors,
+		PadProcessed:     padProcessed,
+		PadErrors:        padErrors,
 	})
 }

@@ -14,6 +14,7 @@ import (
 	"imagesplitter/internal/filesystem"
 	"imagesplitter/internal/logging"
 	"imagesplitter/internal/models"
+	"imagesplitter/internal/padder"
 	"imagesplitter/internal/processor"
 	"imagesplitter/internal/report"
 )
@@ -48,8 +49,14 @@ func Execute(appDir string, cfg *config.Config) (
 	}
 
 	logger.Info(fmt.Sprintf("Run started RunNumber=%d DebugMode=%v", runNumber, cfg.DebugMode))
-	logger.Debug(fmt.Sprintf("Config: root=%q depth=%d targets=%v leftSuffix=%q rightSuffix=%q",
-		cfg.RootFolder, cfg.ScanDepth, cfg.TargetBaseNames, cfg.LeftSuffix, cfg.RightSuffix))
+	logger.Debug(fmt.Sprintf(
+		"Config: root=%q depth=%d targets=%v leftSuffix=%q rightSuffix=%q",
+		cfg.RootFolder,
+		cfg.ScanDepth,
+		cfg.Splitting.TargetBaseNames,
+		cfg.Splitting.LeftSuffix,
+		cfg.Splitting.RightSuffix,
+	))
 
 	folders, walkErrs := filesystem.DiscoverFolders(cfg.RootFolder, cfg.ScanDepth)
 	for _, we := range walkErrs {
@@ -59,6 +66,11 @@ func Execute(appDir string, cfg *config.Config) (
 
 	for _, dir := range folders {
 		fr := processor.ProcessFolder(dir, cfg, logger)
+
+		if cfg.Padding.Enabled {
+			padder.ProcessFolder(fr, cfg, logger)
+		}
+
 		result.FolderResults = append(result.FolderResults, fr)
 	}
 
@@ -90,6 +102,7 @@ func ValidateConfig(cfg *config.Config) error {
 	if cfg.RootFolder == "" {
 		return fmt.Errorf("root folder is required")
 	}
+
 	info, err := os.Stat(cfg.RootFolder)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -102,7 +115,7 @@ func ValidateConfig(cfg *config.Config) error {
 	}
 
 	nonEmptyNames := 0
-	for _, n := range cfg.TargetBaseNames {
+	for _, n := range cfg.Splitting.TargetBaseNames {
 		if strings.TrimSpace(n) != "" {
 			nonEmptyNames++
 		}
@@ -110,14 +123,17 @@ func ValidateConfig(cfg *config.Config) error {
 	if nonEmptyNames == 0 {
 		return fmt.Errorf("at least one target image filename is required")
 	}
-	leftSuffix := strings.TrimSpace(cfg.LeftSuffix)
-	rightSuffix := strings.TrimSpace(cfg.RightSuffix)
+
+	leftSuffix := strings.TrimSpace(cfg.Splitting.LeftSuffix)
+	rightSuffix := strings.TrimSpace(cfg.Splitting.RightSuffix)
+
 	if leftSuffix == "" || rightSuffix == "" {
 		return fmt.Errorf("left and right suffixes must not be empty")
 	}
 	if leftSuffix == rightSuffix {
 		return fmt.Errorf("left and right suffixes must be different from each other")
 	}
+
 	return nil
 }
 
@@ -152,6 +168,7 @@ func copyFile(src, dst string) (err error) {
 		return err
 	}
 	defer in.Close()
+
 	out, err := os.Create(dst)
 	if err != nil {
 		return err
@@ -161,6 +178,7 @@ func copyFile(src, dst string) (err error) {
 			err = cerr
 		}
 	}()
+
 	_, err = io.Copy(out, in)
 	return err
 }
