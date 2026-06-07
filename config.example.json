@@ -1,10 +1,25 @@
 {
   "rootFolder": "C:/Path/To/Your/Images",
   "scanDepth": -1,
-  "targetBaseNames": ["front", "back", "cover"],
-  "leftSuffix": "_left",
-  "rightSuffix": "_right",
-  "deleteOriginal": false,
-  "overwriteExisting": false,
-  "debugMode": false
+  "debugMode": false,
+
+  "splitting": {
+    "enabled": true,
+    "targetBaseNames": ["front", "back", "cover"],
+    "leftSuffix": "_left",
+    "rightSuffix": "_right",
+    "deleteOriginal": false,
+    "overwriteExisting": false
+  },
+
+  "padding": {
+    "enabled": false,
+    "leftPadNames": [],
+    "rightPadNames": [],
+    "createNewFile": false,
+    "leftSuffix": "_padded",
+    "rightSuffix": "_padded",
+    "overwriteExisting": false,
+    "padColor": "#FFFFFF"
+  }
 }
